@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Trading Scanner</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    body {
+      background: #0b0f14;
+      color: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      margin: auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #9ca3af;
+      margin-bottom: 25px;
+    }
+
+    .card {
+      background: #151b23;
+      border: 1px solid #29313d;
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: none;
+      font-size: 16px;
+    }
+
+    select {
+      background: #0d131a;
+      color: white;
+      border: 1px solid #374151;
+      margin-bottom: 15px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .signal {
+      text-align: center;
+      font-size: 32px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .wait {
+      color: #facc15;
+    }
+
+    .buy {
+      color: #22c55e;
+    }
+
+    .sell {
+      color: #ef4444;
+    }
+
+    .row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid #29313d;
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .value {
+      font-weight: bold;
+    }
+
+    .green {
+      color: #22c55e;
+    }
+
+    .red {
+      color: #ef4444;
+    }
+
+    .yellow {
+      color: #facc15;
+    }
+
+    .status {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 13px;
+      margin-top: 15px;
+    }
+
+    .warning {
+      background: #332b0a;
+      border: 1px solid #665516;
+      color: #facc15;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 15px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>🤖 AI Trading Scanner</h1>
+  <p class="subtitle">SMC • Liquidity • BOS • OB • FVG</p>
+
+  <div class="card">
+
+    <label>Select Market</label>
+
+    <select id="symbol">
+      <option>BTCUSD</option>
+      <option>EURUSD</option>
+      <option>GBPUSD</option>
+      <option>USDJPY</option>
+      <option>GBPJPY</option>
+      <option>AUDCHF</option>
+      <option>EURAUD</option>
+      <option>NAS100</option>
+    </select>
+
+    <label>Select Timeframe</label>
+
+    <select id="timeframe">
+      <option>M5</option>
+      <option>M15</option>
+      <option>M30</option>
+      <option>H1</option>
+      <option>H4</option>
+    </select>
+
+    <button onclick="scanMarket()">🔎 SCAN MARKET</button>
+
+  </div>
+
+  <div class="card">
+
+    <div class="signal wait" id="signal">
+      WAIT
+    </div>
+
+    <div class="row">
+      <span>Confluence</span>
+      <span class="value yellow" id="score">--</span>
+    </div>
+
+    <div class="row">
+      <span>Entry</span>
+      <span class="value" id="entry">--</span>
+    </div>
+
+    <div class="row">
+      <span>Stop Loss</span>
+      <span class="value red" id="sl">--</span>
+    </div>
+
+    <div class="row">
+      <span>Take Profit 1</span>
+      <span class="value green" id="tp1">--</span>
+    </div>
+
+    <div class="row">
+      <span>Take Profit 2</span>
+      <span class="value green" id="tp2">--</span>
+    </div>
+
+    <div class="row">
+      <span>Risk / Reward</span>
+      <span class="value" id="rr">--</span>
+    </div>
+
+  </div>
+
+  <div class="card">
+
+    <h3>Market Conditions</h3>
+
+    <div class="row">
+      <span>Liquidity Sweep</span>
+      <span id="liquidity">--</span>
+    </div>
+
+    <div class="row">
+      <span>Break of Structure</span>
+      <span id="bos">--</span>
+    </div>
+
+    <div class="row">
+      <span>Order Block</span>
+      <span id="ob">--</span>
+    </div>
+
+    <div class="row">
+      <span>Fair Value Gap</span>
+      <span id="fvg">--</span>
+    </div>
+
+    <div class="row">
+      <span>HTF Bias</span>
+      <span id="bias">--</span>
+    </div>
+
+  </div>
+
+  <div class="warning">
+    ⚠️ This is a prototype scanner. Signals shown here are simulated and are NOT live trading signals yet.
+  </div>
+
+  <p class="status" id="status">
+    Ready to scan.
+  </p>
+
+</div>
+
+<script>
+
+function randomPrice() {
+  return (Math.random() * 100000 + 10000).toFixed(2);
+}
+
+function scanMarket() {
+
+  const signal = document.getElementById("signal");
+  const score = document.getElementById("score");
+  const entry = document.getElementById("entry");
+  const sl = document.getElementById("sl");
+  const tp1 = document.getElementById("tp1");
+  const tp2 = document.getElementById("tp2");
+  const rr = document.getElementById("rr");
+
+  const liquidity = document.getElementById("liquidity");
+  const bos = document.getElementById("bos");
+  const ob = document.getElementById("ob");
+  const fvg = document.getElementById("fvg");
+  const bias = document.getElementById("bias");
+
+  const status = document.getElementById("status");
+
+  status.innerText = "Scanning market...";
+
+  setTimeout(() => {
+
+    const signals = ["BUY", "SELL", "WAIT"];
+    const result = signals[Math.floor(Math.random() * signals.length)];
+
+    const confidence = Math.floor(Math.random() * 31) + 65;
+
+    signal.className = "signal";
+
+    if (result === "BUY") {
+      signal.innerText = "BUY";
+      signal.classList.add("buy");
+    }
+
+    else if (result === "SELL") {
+      signal.innerText = "SELL";
+      signal.classList.add("sell");
+    }
+
+    else {
+      signal.innerText = "WAIT";
+      signal.classList.add("wait");
+    }
+
+    score.innerText = confidence + "%";
+
+    entry.innerText = randomPrice();
+    sl.innerText = randomPrice();
+    tp1.innerText = randomPrice();
+    tp2.innerText = randomPrice();
+    rr.innerText = "2.5R";
+
+    liquidity.innerHTML = "✅ <span class='green'>Detected</span>";
+    bos.innerHTML = "✅ <span class='green'>Confirmed</span>";
+    ob.innerHTML = "✅ <span class='green'>Found</span>";
+    fvg.innerHTML = "✅ <span class='green'>Found</span>";
+
+    if (result === "BUY") {
+      bias.innerHTML = "📈 <span class='green'>Bullish</span>";
+    }
+
+    else if (result === "SELL") {
+      bias.innerHTML = "📉 <span class='red'>Bearish</span>";
+    }
+
+    else {
+      bias.innerHTML = "⚖️ <span class='yellow'>Neutral</span>";
+    }
+
+    status.innerText =
+      "Scan completed • " +
+      document.getElementById("symbol").value +
+      " • " +
+      document.getElementById("timeframe").value;
+
+  }, 1200);
+
+}
+
+</script>
+
+</body>
+</html>
